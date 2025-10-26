@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36511.14 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EpubWriter", "EpubWriter.csproj", "{58C9CAB4-CCA7-4A09-A535-6089AB1E4205}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EpubWriterTest", "..\EpubWriterTest\EpubWriterTest.csproj", "{52F8938B-FA1B-4705-BF5D-BE3864F47D14}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58C9CAB4-CCA7-4A09-A535-6089AB1E4205}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58C9CAB4-CCA7-4A09-A535-6089AB1E4205}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58C9CAB4-CCA7-4A09-A535-6089AB1E4205}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58C9CAB4-CCA7-4A09-A535-6089AB1E4205}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52F8938B-FA1B-4705-BF5D-BE3864F47D14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52F8938B-FA1B-4705-BF5D-BE3864F47D14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52F8938B-FA1B-4705-BF5D-BE3864F47D14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52F8938B-FA1B-4705-BF5D-BE3864F47D14}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {304CEAAF-6B08-4289-AD55-CD2C52C99D8D}
+	EndGlobalSection
+EndGlobal
