@@ -5,7 +5,7 @@ using System.IO.Compression;
 namespace EpubWriter
 {
     public record Series(string Title, int Volume);
-    public record Story(string Title, string Language, string Author, Series Series, string[] Tags, IReadOnlyList<string> Chapters) 
+    public record Story(string Title, string Language, string Author, Series? Series, string[] Tags, IReadOnlyList<string> Chapters, string? CoverPath = null) 
     { 
         public static DateTime CreatedAt { get; } = DateTime.UtcNow;
 		public object Identifier { get; } = Guid.NewGuid();
@@ -34,6 +34,18 @@ namespace EpubWriter
 			XDocument titlePageXhtml = GenerateTitlePage(story);
 			string titlePagePath = Path.Combine(storyDirectory, "EPUB", "text", "title_page.xhtml");
 			titlePageXhtml.Save(titlePagePath);
+
+			if (!string.IsNullOrEmpty(story.CoverPath))
+			{
+				string coverDestDir = Path.Combine(storyDirectory, "EPUB", "images");
+				Directory.CreateDirectory(coverDestDir);
+				string coverDest = Path.Combine(coverDestDir, "cover" + Path.GetExtension(story.CoverPath));
+				File.Copy(story.CoverPath, coverDest, true);
+
+				XDocument coverXhtml = GenerateCoverPage(story);
+				coverXhtml.Save(Path.Combine(storyDirectory, "EPUB", "text", "cover.xhtml"));
+			}
+
 
 			for (int i = 0; i < story.Chapters.Count; i++)
 			{
@@ -97,6 +109,18 @@ namespace EpubWriter
 			XNamespace xhtml = "http://www.w3.org/1999/xhtml";
 			XNamespace epub = "http://www.idpf.org/2007/ops";
 
+			List<XElement> bodyElements = new ()
+			{
+				new XElement(xhtml + "h1", new XAttribute("class", "title"), story.Title)
+			};
+
+			if (story.Series != null)
+			{
+				bodyElements.Add(
+					new XElement(xhtml + "h2", new XAttribute("class", "series"),
+						$"{story.Series.Title} - Volume {story.Series.Volume}")
+				);
+			}
 
 			return new XDocument(
 				new XDeclaration("1.0", "utf-8", "yes"),
@@ -108,18 +132,37 @@ namespace EpubWriter
 						new XElement(xhtml + "link",
 							new XAttribute("rel", "stylesheet"),
 							new XAttribute("type", "text/css"),
-							new XAttribute("href", "../styles/stylesheet1.css") 
+							new XAttribute("href", "../styles/stylesheet1.css")
 						)
 					),
+					new XElement(xhtml + "body", bodyElements)
+				)
+			);
+		}
+
+		private static XDocument GenerateCoverPage(Story story)
+		{
+			if (string.IsNullOrEmpty(story.CoverPath)) return null!;
+
+			XNamespace xhtml = "http://www.w3.org/1999/xhtml";
+			XNamespace epub = "http://www.idpf.org/2007/ops";
+
+			return new XDocument(
+				new XDeclaration("1.0", "utf-8", "yes"),
+				new XElement(xhtml + "html",
+					new XAttribute(XNamespace.Xmlns + "epub", epub),
+					new XElement(xhtml + "head",
+						new XElement(xhtml + "meta", new XAttribute("charset", "utf-8")),
+						new XElement(xhtml + "title", "Cover")
+					),
 					new XElement(xhtml + "body",
-					new XElement(xhtml + "h1",
-							new XAttribute("class", "title"),
-							story.Title
-						)
+						new XElement(xhtml + "img", new XAttribute("src", $"../images/cover{Path.GetExtension(story.CoverPath)}"),
+							new XAttribute("alt", "Cover"))
 					)
 				)
 			);
 		}
+
 
 		private static XDocument GenerateNavXhtml(Story story)
 		{
@@ -206,35 +249,41 @@ namespace EpubWriter
 
 
 		private static XDocument GenerateContentOpf(Story story)
-        {
-            string opfNamespace = "http://www.idpf.org/2007/opf";
-            XNamespace dc = "http://purl.org/dc/elements/1.1/";
+		{
+			string opfNamespace = "http://www.idpf.org/2007/opf";
+			XNamespace dc = "http://purl.org/dc/elements/1.1/";
 
-            return new XDocument(
-                new XElement(XName.Get("package", opfNamespace),
-                    new XAttribute("version", "3.0"),
-                    new XAttribute("unique-identifier", "bookid"),
-                    new XElement(XName.Get("metadata", opfNamespace),
-                        new XElement(dc + "title", story.Title),
-                        new XElement(dc + "language", story.Language),
-                        new XElement(dc + "creator", story.Author),
-                        new XElement(dc + "identifier",
-                            new XAttribute("id", "bookid"),
-                            $"urn:uuid:{story.Identifier}"
-                        ),
-                        new XElement(dc + "date", Story.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))
-                    ),
-                    new XElement(XName.Get("manifest", opfNamespace),
-                        GenerateManifestItems(story, opfNamespace)
-					),
-                    new XElement(XName.Get("spine", opfNamespace),
-                        GenerateSpineItems(story, opfNamespace)
-                    ),
+			List<XElement> metadata = new List<XElement>
+			{
+				new XElement(dc + "title", story.Title),
+				new XElement(dc + "language", story.Language),
+				new XElement(dc + "creator", story.Author),
+				new XElement(dc + "identifier", new XAttribute("id", "bookid"), $"urn:uuid:{story.Identifier}"),
+				new XElement(dc + "date", Story.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))
+			};
+
+			if (story.Series != null)
+			{
+				metadata.Add(new XElement(dc + "relation", $"{story.Series.Title} - Volume {story.Series.Volume}"));
+			}
+
+			if (!string.IsNullOrEmpty(story.CoverPath))
+			{
+				metadata.Add(new XElement("meta", new XAttribute("name", "cover"), new XAttribute("content", "cover-image")));
+			}
+
+			return new XDocument(
+				new XElement(XName.Get("package", opfNamespace),
+					new XAttribute("version", "3.0"),
+					new XAttribute("unique-identifier", "bookid"),
+					new XElement(XName.Get("metadata", opfNamespace), metadata),
+					new XElement(XName.Get("manifest", opfNamespace), GenerateManifestItems(story, opfNamespace)),
+					new XElement(XName.Get("spine", opfNamespace), GenerateSpineItems(story, opfNamespace)),
 					new XElement(XName.Get("guide", opfNamespace),
 						new XElement(XName.Get("reference", opfNamespace),
 							new XAttribute("type", "cover"),
 							new XAttribute("title", "Cover"),
-							new XAttribute("href", "text/title_page.xhtml")
+							new XAttribute("href", "cover.xhtml")
 						),
 						new XElement(XName.Get("reference", opfNamespace),
 							new XAttribute("type", "toc"),
@@ -243,8 +292,9 @@ namespace EpubWriter
 						)
 					)
 				)
-            );
+			);
 		}
+
 
 		private static XDocument GenerateTocNcx(Story story)
         {
@@ -304,6 +354,15 @@ namespace EpubWriter
 				new XAttribute("href", "text/title_page.xhtml"),
 				new XAttribute("media-type", "application/xhtml+xml")
 			);
+
+			if (!string.IsNullOrEmpty(story.CoverPath))
+			{
+				yield return new XElement(XName.Get("item", opfNamespace),
+					new XAttribute("id", "cover-image"),
+					new XAttribute("href", "images/cover" + Path.GetExtension(story.CoverPath)),
+					new XAttribute("media-type", "image/" + Path.GetExtension(story.CoverPath).TrimStart('.'))
+				);
+			}
 
 			// Chapters
 			for (int i = 0; i < story.Chapters.Count; i++)
