@@ -78,7 +78,7 @@ namespace EpubWriter
 			XNamespace xhtml = "http://www.w3.org/1999/xhtml";
 			XNamespace epub = "http://www.idpf.org/2007/ops";
 
-			string[] paragraphs = chapterText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+			string[] paragraphs = chapterText.Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries);
 
 			return new XDocument(
 				new XDeclaration("1.0", "utf-8", "yes"),
@@ -109,10 +109,7 @@ namespace EpubWriter
 			XNamespace xhtml = "http://www.w3.org/1999/xhtml";
 			XNamespace epub = "http://www.idpf.org/2007/ops";
 
-			List<XElement> bodyElements = new ()
-			{
-				new XElement(xhtml + "h1", new XAttribute("class", "title"), story.Title)
-			};
+			List<XElement> bodyElements = [new (xhtml + "h1", new XAttribute("class", "title"), story.Title)];
 
 			if (story.Series != null)
 			{
@@ -253,14 +250,14 @@ namespace EpubWriter
 			string opfNamespace = "http://www.idpf.org/2007/opf";
 			XNamespace dc = "http://purl.org/dc/elements/1.1/";
 
-			List<XElement> metadata = new List<XElement>
-			{
-				new XElement(dc + "title", story.Title),
-				new XElement(dc + "language", story.Language),
-				new XElement(dc + "creator", story.Author),
-				new XElement(dc + "identifier", new XAttribute("id", "bookid"), $"urn:uuid:{story.Identifier}"),
-				new XElement(dc + "date", Story.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))
-			};
+			List<XElement> metadata =
+			[
+				new(dc + "title", story.Title),
+				new(dc + "language", story.Language),
+				new(dc + "creator", story.Author),
+				new(dc + "identifier", new XAttribute("id", "bookid"), $"urn:uuid:{story.Identifier}"),
+				new(dc + "date", Story.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"))
+			];
 
 			if (story.Series != null)
 			{
